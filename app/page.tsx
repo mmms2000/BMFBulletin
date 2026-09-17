@@ -141,7 +141,7 @@ export default function Home() {
             <a
               className={`btn${href === TEMPLATE ? ' off' : ''}`}
               href={href}
-              download="BMF-bulletin.pdf"
+              download={`BMF-bulletin${day ? `-${day}` : ''}.pdf`}
             >
               Download PDF
             </a>
