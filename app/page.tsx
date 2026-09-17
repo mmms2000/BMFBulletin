@@ -5,6 +5,7 @@ import { fillBulletin, type Fields } from './lib/fill';
 
 const TEMPLATE = '/bulletin.pdf';
 const PAGE = 2; // the order-of-service page, the only one with editable fields
+const CROP = { x: 0, y: 0, width: 256, height: 540 }; // its left panel, in PDF points
 
 const TEXT_FIELDS: { key: keyof Fields; label: string }[] = [
   { key: 'prayer', label: 'Special Prayer Name' },
@@ -53,13 +54,15 @@ export default function Home() {
     const page = await doc.getPage(PAGE);
     const el = canvas.current;
     if (!el) return;
-    const width = el.parentElement!.clientWidth;
-    const base = page.getViewport({ scale: 1 });
+    const scale =
+      (el.parentElement!.clientWidth / CROP.width) * Math.min(window.devicePixelRatio || 1, 2);
     const viewport = page.getViewport({
-      scale: (width / base.width) * Math.min(window.devicePixelRatio || 1, 2),
+      scale,
+      offsetX: -CROP.x * scale,
+      offsetY: -CROP.y * scale,
     });
-    el.width = viewport.width;
-    el.height = viewport.height;
+    el.width = CROP.width * scale;
+    el.height = CROP.height * scale;
     el.style.width = '100%';
     task.current?.cancel(); // a second render on the same canvas throws
     const job = page.render({ canvas: el, canvasContext: el.getContext('2d')!, viewport });

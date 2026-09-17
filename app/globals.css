@@ -40,8 +40,10 @@ button:disabled { opacity: 0.6; }
 .hint { font-size: 12px; color: #6b7590; margin: 0; }
 .err { font-size: 13px; color: #b3261e; margin: 0; }
 .preview {
-  flex: 1 1 520px;
+  flex: 0 1 380px;
+  max-width: 380px;
   min-width: 0;
+  align-self: flex-start;
   border: 1px solid #ccd2de;
   border-radius: 8px;
   background: #fff;
@@ -52,4 +54,5 @@ canvas { width: 100%; height: auto; }
 @media (max-width: 720px) {
   main { padding: 16px; }
   form { flex: 1 1 100%; }
+  .preview { flex: 1 1 100%; max-width: 100%; }
 }
