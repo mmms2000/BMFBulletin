@@ -19,6 +19,13 @@ const DEFAULTS: Fields = {
   pastor: 'Rev Tin Aung Shwe',
 };
 
+// today if it is Sunday, otherwise the coming Sunday
+const nextSunday = () => {
+  const d = new Date();
+  d.setDate(d.getDate() + ((7 - d.getDay()) % 7));
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
 const fmt = (iso: string) => {
   if (!iso) return '';
   const d = new Date(iso + 'T00:00:00');
@@ -92,6 +99,7 @@ export default function Home() {
   );
 
   useEffect(() => {
+    setDay(nextSunday()); // client-side so the prerendered HTML does not go stale
     build(false);
     return () => {
       if (blob.current) URL.revokeObjectURL(blob.current);
