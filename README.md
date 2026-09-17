@@ -11,5 +11,7 @@ Replace the template: drop a new file at `public/bulletin.pdf`. If its layout ch
 update the box coordinates in `app/lib/fill.ts` (page 2, top-left origin, points —
 `pdftotext -bbox` gives them).
 
+Preview is rendered with pdf.js to a canvas (iframe PDF viewers do not work on mobile).
+
 Fonts in `public/`: Libre Baskerville (Latin, matches the template) and Noto Sans
 Myanmar. Korean input would render blank — add a Korean font to `fill.ts` if needed.
