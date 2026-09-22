@@ -1,7 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { fillBulletin, type Fields } from './lib/fill';
+import { renderToCanvas } from './lib/preview';
 
 const TEMPLATE = '/bulletin.pdf';
 const PAGE = 2; // the order-of-service page, the only one with editable fields
@@ -41,35 +43,10 @@ export default function Home() {
   const [error, setError] = useState('');
   const canvas = useRef<HTMLCanvasElement>(null);
   const blob = useRef<string | null>(null);
-  const task = useRef<{ cancel: () => void } | null>(null);
 
   // ponytail: iframe PDF viewers are unreliable on mobile, so page 2 is drawn to a canvas
   const preview = useCallback(async (bytes: ArrayBuffer) => {
-    const pdfjs = await import('pdfjs-dist');
-    pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-      'pdfjs-dist/build/pdf.worker.min.mjs',
-      import.meta.url,
-    ).toString();
-    const doc = await pdfjs.getDocument({ data: bytes }).promise;
-    const page = await doc.getPage(PAGE);
-    const el = canvas.current;
-    if (!el) return;
-    const scale =
-      (el.parentElement!.clientWidth / CROP.width) * Math.min(window.devicePixelRatio || 1, 2);
-    const viewport = page.getViewport({
-      scale,
-      offsetX: -CROP.x * scale,
-      offsetY: -CROP.y * scale,
-    });
-    el.width = CROP.width * scale;
-    el.height = CROP.height * scale;
-    el.style.width = '100%';
-    task.current?.cancel(); // a second render on the same canvas throws
-    const job = page.render({ canvas: el, canvasContext: el.getContext('2d')!, viewport });
-    task.current = job;
-    await job.promise.catch((e) => {
-      if (e?.name !== 'RenderingCancelledException') throw e;
-    });
+    if (canvas.current) await renderToCanvas(bytes, canvas.current, PAGE, CROP);
   }, []);
 
   const build = useCallback(
@@ -112,7 +89,9 @@ export default function Home() {
 
   return (
     <main>
-      <h1>BMF Bulletin</h1>
+      <h1>
+        BMF Bulletin <Link href="/namecard">Namecards →</Link>
+      </h1>
       <div className="row">
         <form
           onSubmit={(e) => {

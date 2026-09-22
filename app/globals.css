@@ -57,3 +57,13 @@ canvas { width: 100%; height: auto; }
   form { flex: 1 1 100%; }
   .preview { flex: 1 1 100%; max-width: 100%; }
 }
+
+h1 a {
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7590;
+  margin-left: 10px;
+  text-decoration: none;
+}
+h1 a:hover { text-decoration: underline; }
+input[type='file'] { padding: 6px; border-style: dashed; }
