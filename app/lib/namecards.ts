@@ -9,6 +9,7 @@ const MM = 72 / 25.4;
 const A4 = { width: 210 * MM, height: 297 * MM };
 const CARD = { width: 95 * MM, height: 122 * MM };
 const GRID = { cols: 2, rows: 2 };
+const GAP = 6 * MM; // breathing room between cards, and room for the scissors
 
 // The template page is 269.28 x 345.6pt, drawn at its own size inside the card cell.
 const TPL = { width: 269.28, height: 345.6 };
@@ -49,36 +50,25 @@ export async function buildNamecards(
     pages.set(team, embedded);
   }
 
-  const marginX = (A4.width - GRID.cols * CARD.width) / 2;
-  const marginY = (A4.height - GRID.rows * CARD.height) / 2;
+  const marginX = (A4.width - GRID.cols * CARD.width - (GRID.cols - 1) * GAP) / 2;
+  const marginY = (A4.height - GRID.rows * CARD.height - (GRID.rows - 1) * GAP) / 2;
 
-  // ponytail: crop marks in the margins, not a border around each card, so nothing prints on the badge
-  const TICK = 4 * MM;
-  const cutMarks = (p: ReturnType<typeof out.addPage>) => {
-    const line = { thickness: 0.25, color: rgb(0.6, 0.6, 0.6) };
-    for (let c = 0; c <= GRID.cols; c++) {
-      const x = marginX + c * CARD.width;
-      p.drawLine({ start: { x, y: marginY - TICK }, end: { x, y: marginY }, ...line });
-      p.drawLine({ start: { x, y: A4.height - marginY }, end: { x, y: A4.height - marginY + TICK }, ...line });
-    }
-    for (let r = 0; r <= GRID.rows; r++) {
-      const y = marginY + r * CARD.height;
-      p.drawLine({ start: { x: marginX - TICK, y }, end: { x: marginX, y }, ...line });
-      p.drawLine({ start: { x: A4.width - marginX, y }, end: { x: A4.width - marginX + TICK, y }, ...line });
-    }
-  };
+  // ponytail: one dotted outline per card, drawn last so it sits on top of the artwork
+  const cuts: { x: number; y: number }[] = [];
 
   let page = null as ReturnType<typeof out.addPage> | null;
   people.forEach((person, i) => {
     const slot = i % perPage;
     if (slot === 0) {
       page = out.addPage([A4.width, A4.height]);
-      cutMarks(page);
     }
     const col = slot % GRID.cols;
     const row = Math.floor(slot / GRID.cols);
-    const x = marginX + col * CARD.width + (CARD.width - TPL.width) / 2;
-    const y = A4.height - marginY - (row + 1) * CARD.height + (CARD.height - TPL.height) / 2;
+    const cx = marginX + col * (CARD.width + GAP);
+    const cy = A4.height - marginY - row * (CARD.height + GAP) - CARD.height;
+    cuts.push({ x: cx, y: cy });
+    const x = cx + (CARD.width - TPL.width) / 2;
+    const y = cy + (CARD.height - TPL.height) / 2;
 
     page!.drawPage(pages.get(person.team)!, { x, y, width: TPL.width, height: TPL.height });
     page!.drawRectangle({
@@ -102,6 +92,18 @@ export async function buildNamecards(
       size,
       font,
       color: rgb(0, 0, 0),
+    });
+  });
+
+  cuts.forEach(({ x, y }, i) => {
+    out.getPage(Math.floor(i / perPage)).drawRectangle({
+      x,
+      y,
+      width: CARD.width,
+      height: CARD.height,
+      borderColor: rgb(0.6, 0.6, 0.6),
+      borderWidth: 0.4,
+      borderDashArray: [2, 2],
     });
   });
 
