@@ -53,8 +53,18 @@ export async function buildNamecards(
   const marginX = (A4.width - GRID.cols * CARD.width - (GRID.cols - 1) * GAP) / 2;
   const marginY = (A4.height - GRID.rows * CARD.height - (GRID.rows - 1) * GAP) / 2;
 
-  // ponytail: one dotted outline per card, drawn last so it sits on top of the artwork
-  const cuts: { x: number; y: number }[] = [];
+  // ponytail: one dotted line down the middle of each gutter, never across a card
+  const cutLines = (p: ReturnType<typeof out.addPage>) => {
+    const line = { thickness: 0.4, color: rgb(0.6, 0.6, 0.6), dashArray: [2, 2] };
+    for (let c = 1; c < GRID.cols; c++) {
+      const x = marginX + c * CARD.width + (c - 0.5) * GAP;
+      p.drawLine({ start: { x, y: 0 }, end: { x, y: A4.height }, ...line });
+    }
+    for (let r = 1; r < GRID.rows; r++) {
+      const y = A4.height - marginY - r * CARD.height - (r - 0.5) * GAP;
+      p.drawLine({ start: { x: 0, y }, end: { x: A4.width, y }, ...line });
+    }
+  };
 
   let page = null as ReturnType<typeof out.addPage> | null;
   people.forEach((person, i) => {
@@ -66,7 +76,6 @@ export async function buildNamecards(
     const row = Math.floor(slot / GRID.cols);
     const cx = marginX + col * (CARD.width + GAP);
     const cy = A4.height - marginY - row * (CARD.height + GAP) - CARD.height;
-    cuts.push({ x: cx, y: cy });
     const x = cx + (CARD.width - TPL.width) / 2;
     const y = cy + (CARD.height - TPL.height) / 2;
 
@@ -95,17 +104,7 @@ export async function buildNamecards(
     });
   });
 
-  cuts.forEach(({ x, y }, i) => {
-    out.getPage(Math.floor(i / perPage)).drawRectangle({
-      x,
-      y,
-      width: CARD.width,
-      height: CARD.height,
-      borderColor: rgb(0.6, 0.6, 0.6),
-      borderWidth: 0.4,
-      borderDashArray: [2, 2],
-    });
-  });
+  out.getPages().forEach(cutLines);
 
   return out.save();
 }
