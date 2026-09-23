@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { buildNamecards, perPage, STAFF, teamLabel, TEAMS, type Person } from '../lib/namecards';
+import { buildNamecards, perPage, STAFF, teamLabel, type Person } from '../lib/namecards';
 import { readRoster } from '../lib/roster';
 import { renderToCanvas } from '../lib/preview';
 
@@ -70,7 +70,12 @@ export default function Namecard() {
     }
   }, [people]);
 
-  const counts = TEAMS.map((t) => people.filter((p) => p.team === t).length);
+  const counts = new Map<string, number>(); // T1…T7 first, then one entry per role
+  people.forEach((p) => {
+    const label = p.team === STAFF ? p.role || 'Staff' : teamLabel(p.team);
+    counts.set(label, (counts.get(label) ?? 0) + 1);
+  });
+  const order = (l: string) => (l.startsWith('T') && l.length === 2 ? l : `Z${l}`);
 
   return (
     <main>
@@ -92,8 +97,9 @@ export default function Namecard() {
             <p className="hint">
               {people.length}명 · A4 {Math.ceil(people.length / perPage)}장 (한 장에 {perPage}개)
               <br />
-              {TEAMS.map((t, i) => (counts[i] ? `${teamLabel(t)} ${counts[i]}명` : null))
-                .filter(Boolean)
+              {[...counts]
+                .sort((a, b) => order(a[0]).localeCompare(order(b[0])))
+                .map(([label, n]) => `${label} ${n}명`)
                 .join(' · ')}
             </p>
           )}
@@ -122,7 +128,7 @@ export default function Namecard() {
           )}
           <p className="hint">
             첫 줄이 머리글(이름/팀)이면 알아서 찾고, 없으면 1열=이름 2열=팀으로 읽습니다. 팀은
-            1–7, 그리고 Staff(스태프)를 쓸 수 있습니다.
+            1–7 숫자, 또는 Staff·Instructor 같은 글자를 쓰면 그 글자가 이름 밑에 찍힙니다.
           </p>
         </form>
         <div className="preview">

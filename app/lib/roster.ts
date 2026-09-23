@@ -5,13 +5,15 @@ const NAME_HEADERS = ['name', '이름', '성명', '아이디'];
 const TEAM_HEADERS = ['team', '팀', '조', '팀명', '팀번호'];
 
 const norm = (v: unknown) => String(v ?? '').trim();
-const STAFF_WORDS = /staff|스태프|스텝|스탭|간사/i;
-const teamOf = (v: unknown) => {
+// A number 1-7 picks that team's template; any other short word (Staff, Instructor, …)
+// gets the Staff template with the word printed under the name.
+const teamOf = (v: unknown): { team: number; role?: string } | null => {
   const raw = norm(v);
-  if (STAFF_WORDS.test(raw)) return STAFF;
   const digits = raw.match(/\d+/);
   const n = digits ? Number(digits[0]) : NaN;
-  return n >= 1 && n <= 7 ? n : null;
+  if (n >= 1 && n <= 7) return { team: n };
+  if (raw && !digits && raw.length <= 20) return { team: STAFF, role: raw };
+  return null;
 };
 
 /** Reads an .xlsx roster into people plus the rows it could not use. */
@@ -30,13 +32,13 @@ export async function readRoster(file: File): Promise<{ people: Person[]; skippe
   const skipped: string[] = [];
   rows.slice(hasHeader ? 1 : 0).forEach((row, i) => {
     const name = norm(row[nameCol]);
-    const team = teamOf(row[teamCol]);
-    if (!name && team === null) return; // blank row
-    if (!name || team === null) {
+    const slot = teamOf(row[teamCol]);
+    if (!name && slot === null) return; // blank row
+    if (!name || slot === null) {
       skipped.push(`${i + (hasHeader ? 2 : 1)}행: ${name || '(이름 없음)'} / ${norm(row[teamCol]) || '(팀 없음)'}`);
       return;
     }
-    people.push({ name, team });
+    people.push({ name, ...slot });
   });
   return { people, skipped };
 }

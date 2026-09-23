@@ -1,10 +1,9 @@
 import { PDFDocument, rgb, PDFFont } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 
-export type Person = { name: string; team: number };
+export type Person = { name: string; team: number; role?: string };
 
 export const STAFF = 0;
-export const TEAMS = [1, 2, 3, 4, 5, 6, 7, STAFF];
 export const teamLabel = (team: number) => (team === STAFF ? 'Staff' : `T${team}`);
 
 const MM = 72 / 25.4;
@@ -25,7 +24,7 @@ const NAME = {
   coverBottom: 248,
 };
 
-// The "Team n" line, same measurement. The Staff template still carries "Team 1", so it gets replaced.
+// The "Team n" line, same measurement. The Staff template carries "Team 1", so the role replaces it.
 const SUB = { baseline: 259.66, capHeight: 8.86, coverTop: 244, coverBottom: 266 };
 
 const MYANMAR = /[က-႟ꩠ-ꩿ]/;
@@ -101,9 +100,10 @@ export async function buildNamecards(
         height: SUB.coverBottom - SUB.coverTop,
         color: rgb(1, 1, 1),
       });
+      const role = person.role || 'Staff';
       const size = sizeFor(latin, SUB.capHeight);
-      const w = latin.widthOfTextAtSize('Staff', size);
-      page!.drawText('Staff', {
+      const w = latin.widthOfTextAtSize(role, size);
+      page!.drawText(role, {
         x: x + (TPL.width - w) / 2,
         y: y + TPL.height - SUB.baseline,
         size,
