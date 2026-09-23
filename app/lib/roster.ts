@@ -1,12 +1,15 @@
 import { readSheet } from 'read-excel-file/browser';
-import type { Person } from './namecards';
+import { STAFF, type Person } from './namecards';
 
 const NAME_HEADERS = ['name', '이름', '성명', '아이디'];
 const TEAM_HEADERS = ['team', '팀', '조', '팀명', '팀번호'];
 
 const norm = (v: unknown) => String(v ?? '').trim();
+const STAFF_WORDS = /staff|스태프|스텝|스탭|간사/i;
 const teamOf = (v: unknown) => {
-  const digits = norm(v).match(/\d+/);
+  const raw = norm(v);
+  if (STAFF_WORDS.test(raw)) return STAFF;
+  const digits = raw.match(/\d+/);
   const n = digits ? Number(digits[0]) : NaN;
   return n >= 1 && n <= 7 ? n : null;
 };

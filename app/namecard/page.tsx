@@ -2,11 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { buildNamecards, perPage, TEAMS, type Person } from '../lib/namecards';
+import { buildNamecards, perPage, STAFF, teamLabel, TEAMS, type Person } from '../lib/namecards';
 import { readRoster } from '../lib/roster';
 import { renderToCanvas } from '../lib/preview';
 
-const templateUrl = (team: number) => `/namecards/T${team}.pdf`;
+const templateUrl = (team: number) =>
+  team === STAFF ? '/namecards/Staff.pdf' : `/namecards/T${team}.pdf`;
 
 export default function Namecard() {
   const [people, setPeople] = useState<Person[]>([]);
@@ -91,7 +92,7 @@ export default function Namecard() {
             <p className="hint">
               {people.length}명 · A4 {Math.ceil(people.length / perPage)}장 (한 장에 {perPage}개)
               <br />
-              {TEAMS.map((t, i) => (counts[i] ? `T${t} ${counts[i]}명` : null))
+              {TEAMS.map((t, i) => (counts[i] ? `${teamLabel(t)} ${counts[i]}명` : null))
                 .filter(Boolean)
                 .join(' · ')}
             </p>
@@ -121,7 +122,7 @@ export default function Namecard() {
           )}
           <p className="hint">
             첫 줄이 머리글(이름/팀)이면 알아서 찾고, 없으면 1열=이름 2열=팀으로 읽습니다. 팀은
-            1–7만 사용합니다.
+            1–7, 그리고 Staff(스태프)를 쓸 수 있습니다.
           </p>
         </form>
         <div className="preview">

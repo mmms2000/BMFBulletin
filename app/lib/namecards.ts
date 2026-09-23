@@ -3,7 +3,9 @@ import fontkit from '@pdf-lib/fontkit';
 
 export type Person = { name: string; team: number };
 
-export const TEAMS = [1, 2, 3, 4, 5, 6, 7];
+export const STAFF = 0;
+export const TEAMS = [1, 2, 3, 4, 5, 6, 7, STAFF];
+export const teamLabel = (team: number) => (team === STAFF ? 'Staff' : `T${team}`);
 
 const MM = 72 / 25.4;
 const A4 = { width: 210 * MM, height: 297 * MM };
@@ -23,6 +25,9 @@ const NAME = {
   coverBottom: 248,
 };
 
+// The "Team n" line, same measurement. The Staff template still carries "Team 1", so it gets replaced.
+const SUB = { baseline: 259.66, capHeight: 8.86, coverTop: 244, coverBottom: 266 };
+
 const MYANMAR = /[က-႟ꩠ-ꩿ]/;
 
 export const perPage = GRID.cols * GRID.rows;
@@ -37,10 +42,10 @@ export async function buildNamecards(
   out.registerFontkit(fontkit);
   const latin = await out.embedFont(latinFont, { subset: true });
   const myanmar = await out.embedFont(myanmarFont, { subset: true });
-  const sizeFor = (font: PDFFont) => {
+  const sizeFor = (font: PDFFont, capHeight: number) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const f = (font as any).embedder.font;
-    return (NAME.capHeight * f.unitsPerEm) / (f.capHeight || f.ascent);
+    return (capHeight * f.unitsPerEm) / (f.capHeight || f.ascent);
   };
 
   // one embedded XObject per team, reused by every card of that team
@@ -88,8 +93,27 @@ export async function buildNamecards(
       color: rgb(1, 1, 1),
     });
 
+    if (person.team === STAFF) {
+      page!.drawRectangle({
+        x,
+        y: y + TPL.height - SUB.coverBottom,
+        width: TPL.width,
+        height: SUB.coverBottom - SUB.coverTop,
+        color: rgb(1, 1, 1),
+      });
+      const size = sizeFor(latin, SUB.capHeight);
+      const w = latin.widthOfTextAtSize('Staff', size);
+      page!.drawText('Staff', {
+        x: x + (TPL.width - w) / 2,
+        y: y + TPL.height - SUB.baseline,
+        size,
+        font: latin,
+        color: rgb(0, 0, 0),
+      });
+    }
+
     const font = MYANMAR.test(person.name) ? myanmar : latin;
-    let size = sizeFor(font);
+    let size = sizeFor(font, NAME.capHeight);
     let width = font.widthOfTextAtSize(person.name, size);
     if (width > NAME.maxWidth) {
       size *= NAME.maxWidth / width;
