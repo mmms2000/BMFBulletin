@@ -74,9 +74,17 @@ export async function buildWinkorea(
 ): Promise<Uint8Array> {
   const out = await PDFDocument.create();
   out.registerFontkit(fontkit);
-  const font = await out.embedFont(fontBytes) // ponytail: subset:true drops glyphs from Pretendard (pdf-lib bug); full font ≈ +2.6MB per PDF;
+  const font = await out.embedFont(fontBytes); // ponytail: subset:true drops glyphs from Pretendard (pdf-lib bug); full font ≈ +2.6MB per PDF
   const tpl = Object.fromEntries(
-    await Promise.all(COLORS.map(async (c) => [c, (await out.embedPdf(templates[c]))[0]] as const)),
+    await Promise.all(
+      COLORS.map(async (c) => {
+        // the templates are trimmed via a MediaBox that doesn't start at 0,0; pdf-lib ignores that origin
+        // unless the box is passed explicitly, which shifted the art 7pt right of the text
+        const src = (await PDFDocument.load(templates[c])).getPage(0);
+        const { x, y, width, height } = src.getMediaBox();
+        return [c, await out.embedPage(src, { left: x, bottom: y, right: x + width, top: y + height })] as const;
+      }),
+    ),
   );
 
   const x0 = (A4.width - 2 * CARD.width) / 2;
@@ -96,7 +104,7 @@ export async function buildWinkorea(
     // TEAM 05: white letters with a black outline (ponytail: outline = the text drawn 8 times around, black)
     const label = `TEAM ${String(s.team).padStart(2, '0')}`;
     const size = 18;
-    const lx = ox + PILL.x + (PILL.w - font.widthOfTextAtSize(label, size)) / 2 + (s.leader ? 9 : 0); // room for the star
+    const lx = ox + PILL.x + (PILL.w - font.widthOfTextAtSize(label, size)) / 2 + (s.leader ? 14.5 : 0); // leader: star + label centred together
     const ly = top - (PILL.y + PILL.h - 10.5);
     for (const [dx, dy] of [[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]])
       page!.drawText(label, { x: lx + dx * 1.1, y: ly + dy * 1.1, size, font, color: rgb(0, 0, 0) });
