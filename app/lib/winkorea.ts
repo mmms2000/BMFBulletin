@@ -1,7 +1,7 @@
 import { PDFDocument, rgb, PDFFont, PDFPage } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 
-// WIN KOREA Jeju name tags: 90x120mm, four per A4, touching, cut lines on every edge.
+// WIN KOREA Jeju name tags: 95x122mm (the original file size), four per A4, touching, cut lines on every edge.
 export type Student = { eng: string; kor: string; team: number; leader: boolean };
 
 export const perPage = 4;
@@ -11,15 +11,15 @@ export const COLORS = ['yellow', 'green', 'purple'] as const;
 
 const MM = 72 / 25.4;
 const A4 = { width: 210 * MM, height: 297 * MM };
-const CARD = { width: 90 * MM, height: 120 * MM };
+const CARD = { width: 269.25, height: 345.75 }; // 95x122mm, exactly the original page
 const GREEN = rgb(0.043, 0.263, 0.235); // the template's name colour
 
 // Boxes on the card, in points from its top-left. The name boxes stop short of the divider line
-// (y≈203) and the team pill, so English and Korean names can never overlap.
+// (y≈206) and the team pill, so English and Korean names can never overlap.
 type Box = { x: number; y: number; w: number; h: number };
-const ENG: Box = { x: 17, y: 161, w: 221, h: 39 };
-const KOR: Box = { x: 17, y: 207, w: 221, h: 43 };
-const PILL: Box = { x: 65, y: 253, w: 125, h: 35 };
+const ENG: Box = { x: 24, y: 164, w: 221, h: 39 };
+const KOR: Box = { x: 24, y: 210, w: 221, h: 43 };
+const PILL: Box = { x: 72, y: 256, w: 125, h: 35 };
 
 /** Greedy word wrap; a word wider than the box (Korean, no spaces) is cut into equal parts. */
 function wrap(font: PDFFont, text: string, size: number, width: number) {
@@ -79,7 +79,7 @@ export async function buildWinkorea(
     await Promise.all(
       COLORS.map(async (c) => {
         // templates are the original 95x122mm pages (vector, untouched apart from the placeholder text);
-        // embed only the centred 90x120mm, trimming the edges without scaling
+        // CARD is the full page, so nothing is trimmed or scaled
         const src = (await PDFDocument.load(templates[c])).getPage(0);
         const { x, y, width, height } = src.getMediaBox();
         const left = x + (width - CARD.width) / 2;

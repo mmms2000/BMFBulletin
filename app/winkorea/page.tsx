@@ -136,7 +136,7 @@ export default function Winkorea() {
           )}
           <p className="hint">
             머리글에서 팀·한글명·영문명 열을 찾습니다. 팀은 Team1 또는 1. 아무 칸에나 &apos;조장&apos;이
-            있으면 빨간 별이 붙습니다. 팀 1–4 노랑 · 5–8 초록 · 9–12 보라. 90×120mm, A4에 4장.
+            있으면 빨간 별이 붙습니다. 팀 1–4 노랑 · 5–8 초록 · 9–12 보라. 95×122mm(원본 크기), A4에 4장.
           </p>
         </form>
         <div className="preview">
