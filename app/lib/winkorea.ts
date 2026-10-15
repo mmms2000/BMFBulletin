@@ -78,11 +78,13 @@ export async function buildWinkorea(
   const tpl = Object.fromEntries(
     await Promise.all(
       COLORS.map(async (c) => {
-        // the templates are trimmed via a MediaBox that doesn't start at 0,0; pdf-lib ignores that origin
-        // unless the box is passed explicitly, which shifted the art 7pt right of the text
+        // templates are the original 95x122mm pages (vector, untouched apart from the placeholder text);
+        // embed only the centred 90x120mm, trimming the edges without scaling
         const src = (await PDFDocument.load(templates[c])).getPage(0);
         const { x, y, width, height } = src.getMediaBox();
-        return [c, await out.embedPage(src, { left: x, bottom: y, right: x + width, top: y + height })] as const;
+        const left = x + (width - CARD.width) / 2;
+        const bottom = y + (height - CARD.height) / 2;
+        return [c, await out.embedPage(src, { left, bottom, right: left + CARD.width, top: bottom + CARD.height })] as const;
       }),
     ),
   );
