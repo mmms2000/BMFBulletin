@@ -104,7 +104,7 @@ export async function buildWinkorea(
     // TEAM 05: white letters with a black outline (ponytail: outline = the text drawn 8 times around, black)
     const label = `TEAM ${String(s.team).padStart(2, '0')}`;
     const size = 18;
-    const lx = ox + PILL.x + (PILL.w - font.widthOfTextAtSize(label, size)) / 2 + (s.leader ? 14.5 : 0); // leader: star + label centred together
+    const lx = ox + PILL.x + (PILL.w - font.widthOfTextAtSize(label, size)) / 2; // same spot for leaders; the star just sits to the left
     const ly = top - (PILL.y + PILL.h - 10.5);
     for (const [dx, dy] of [[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]])
       page!.drawText(label, { x: lx + dx * 1.1, y: ly + dy * 1.1, size, font, color: rgb(0, 0, 0) });
